@@ -6,11 +6,19 @@
 .rdg-cell {
   border: 1px solid #ddd; /* Add border to each cell */
 }
+#dataGridContainer {
+  overflow-x: auto; /* Allow horizontal scrolling if necessary */
+  width: 100%; /* Ensure the container takes full width */
+}
 
 .rdg-header-cell {
   border: 1px solid #ddd; /* Add border to header cells */
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: hidden; /* Hide overflow text */
+  text-overflow: ellipsis; /* Add ellipsis for overflow text */
+  padding: 10px; /* Add padding for better spacing */
+  min-width: 100px; /* Set a minimum width for header cells */
 }
-
 :root {
   --background: #ffffff;
   --foreground: #171717;

@@ -42,7 +42,10 @@ export default function CSVUpload() {
               sortable: true,
               editable: true,
               renderEditCell: textEditor,
-              width: calculateColumnWidth(header, parsedData, header),
+              width: Math.max(
+                100,
+                calculateColumnWidth(header, parsedData, header)
+              ),
             }));
 
             setColumns(gridColumns);

@@ -116,7 +116,10 @@ export default function CSVUpload() {
         <>
           <div id="dataGridContainer">
             <DataGrid
-              columns={columns}
+              columns={columns.map((col) => ({
+                ...col,
+                name: <div className="min-w-[100px]">{col.name}</div>, // Using Tailwind for min-width
+              }))}
               rows={rows}
               rowKeyGetter={rowKeyGetter}
               onRowsChange={setRows}

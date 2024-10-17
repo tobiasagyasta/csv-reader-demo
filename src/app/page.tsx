@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Papa from "papaparse";
 import DataGrid, { textEditor } from "react-data-grid";
-import "react-data-grid/lib/styles.css";
+
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -111,7 +111,7 @@ export default function CSVUpload() {
 
       {rows.length > 0 && columns.length > 0 && (
         <>
-          <div id="dataGridContainer" style={{ height: "400px" }}>
+          <div id="dataGridContainer">
             <DataGrid
               columns={columns}
               rows={rows}

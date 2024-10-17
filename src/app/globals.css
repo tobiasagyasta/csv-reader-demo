@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+.rdg-cell {
+  border: 1px solid #ddd; /* Add border to each cell */
+}
+
+.rdg-header-cell {
+  border: 1px solid #ddd; /* Add border to header cells */
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

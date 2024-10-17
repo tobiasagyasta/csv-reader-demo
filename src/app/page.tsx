@@ -1,101 +1,141 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import Papa from "papaparse";
+import DataGrid, { textEditor } from "react-data-grid";
+import "react-data-grid/lib/styles.css";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
+export default function CSVUpload() {
+  const [columns, setColumns] = useState<any[]>([]);
+  const [rows, setRows] = useState<any[]>([]);
+  const [fileName, setFileName] = useState<string>("");
+
+  // Helper function to calculate dynamic column width
+  const calculateColumnWidth = (header: string, rows: any[], key: string) => {
+    const maxLength = Math.max(
+      header.length,
+      ...rows.map((row) => (row[key] ? String(row[key]).length : 0))
+    );
+    return Math.max(80, maxLength * 10); // Minimum 80px or based on length
+  };
+
+  // Handle CSV file upload
+  const handleFileChange = (event: any) => {
+    const file = event.target.files[0];
+    setColumns([]);
+    setRows([]);
+
+    if (file) {
+      setFileName(file.name);
+      Papa.parse(file, {
+        header: true,
+        complete: (result: any) => {
+          const parsedData = result.data;
+          if (parsedData.length > 0) {
+            const headers = Object.keys(parsedData[0]);
+            const gridColumns = headers.map((header) => ({
+              key: header,
+              name: header,
+              resizable: true,
+              sortable: true,
+              editable: true,
+              renderEditCell: textEditor,
+              width: calculateColumnWidth(header, parsedData, header),
+            }));
+
+            setColumns(gridColumns);
+            setRows(parsedData);
+          }
+        },
+        error: (error) => {
+          console.error("Error parsing CSV:", error);
+        },
+      });
+    }
+  };
+
+  // Function to return row id based on the first column
+  const rowKeyGetter = (row: any) =>
+    row[columns.length > 0 ? columns[0].key : ""];
+
+  // Handle row updates
+  const handleRowsChange = (newRows: any[]) => setRows(newRows);
+
+  // Convert the DataGrid content to PDF using jsPDF and autoTable
+  const handleSavePDF = () => {
+    const doc = new jsPDF({
+      orientation: "landscape", // Landscape to give more horizontal space
+      unit: "mm",
+      format: [420, 297],
+    });
+
+    // Prepare column headers as strings for autoTable
+    const pdfColumns = columns.map((col) => col.name); // Extract the names of columns
+
+    // Prepare rows for autoTable
+    const pdfRows = rows.map(
+      (row) => columns.map((col) => row[col.key]) // Extract row data based on the column keys
+    );
+
+    // Add title to the PDF
+    doc.text(fileName.replace(".csv", ""), 14, 16);
+
+    // Add autoTable to the PDF
+    autoTable(doc, {
+      head: [pdfColumns], // Table header
+      body: pdfRows, // Table body
+      startY: 20, // Start after the title
+      theme: "grid", // Optional: Theme for the table (grid, plain, etc.)
+      headStyles: { lineWidth: 0.3 },
+      styles: { fontSize: 10, cellPadding: 2, halign: "center" }, // Adjust font size and cell padding
+      columnStyles: {
+        // Adjust individual column widths, or apply the same width to all columns
+        0: { cellWidth: "auto" }, // You can set specific widths for columns, 'auto' allows resizing
+      },
+      margin: { top: 30 }, // Adjust top margin to make space for title
+      pageBreak: "auto", // Automatically break pages
+    });
+
+    // Save the generated PDF
+    doc.save(`${fileName.replace(".csv", "")}.pdf`);
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div>
+      <h1 className="mx-auto text-center my-8 text-3xl">Upload CSV Demo</h1>
+      <input
+        className="ml-4 mb-8"
+        type="file"
+        accept=".csv"
+        onChange={handleFileChange}
+      />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+      {rows.length > 0 && columns.length > 0 && (
+        <>
+          <div id="dataGridContainer" style={{ height: "400px" }}>
+            <DataGrid
+              columns={columns}
+              rows={rows}
+              rowKeyGetter={rowKeyGetter}
+              onRowsChange={setRows}
+              defaultColumnOptions={{
+                sortable: true,
+                resizable: true,
+              }}
+              className="ml-4"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+          {/* Button to trigger PDF save */}
+          <button
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4 ml-4"
+            onClick={handleSavePDF}
           >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+            Save as PDF
+          </button>
+        </>
+      )}
     </div>
   );
 }

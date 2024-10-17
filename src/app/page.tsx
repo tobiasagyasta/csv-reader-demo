@@ -60,9 +60,6 @@ export default function CSVUpload() {
   const rowKeyGetter = (row: any) =>
     row[columns.length > 0 ? columns[0].key : ""];
 
-  // Handle row updates
-  const handleRowsChange = (newRows: any[]) => setRows(newRows);
-
   // Convert the DataGrid content to PDF using jsPDF and autoTable
   const handleSavePDF = () => {
     const doc = new jsPDF({
